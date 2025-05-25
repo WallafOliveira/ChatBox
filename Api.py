@@ -88,25 +88,30 @@ def pergunta():
     if not is_ecommerce_related(pergunta):
         return jsonify({"erro": "A pergunta não está relacionada ao e-commerce."}), 400
 
-    if not arquivo:
-        return jsonify({"erro": "Nenhum arquivo enviado."}), 400
+    dados = None
+    dados_clientes = []
 
-    try:
-        dados = ler_documento(arquivo, arquivo.filename)
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 400
-
-    dados_clientes = dados.fillna("").to_dict(orient="records")
+    if arquivo:
+        try:
+            dados = ler_documento(arquivo, arquivo.filename)
+            dados_clientes = dados.fillna("").to_dict(orient="records")
+        except Exception as e:
+            return jsonify({"erro": str(e)}), 400
 
     try:
         resposta = gerar_resposta_formatada(pergunta, dados)
-        return jsonify({
+        resposta_json = {
             "pergunta": pergunta,
             "resposta": resposta,
-            "dados_clientes": dados_clientes
-        })
+        }
+        if dados_clientes:
+            resposta_json["dados_clientes"] = dados_clientes
+
+        return jsonify(resposta_json)
+
     except Exception as e:
         return jsonify({"erro": f"Erro ao processar a pergunta: {str(e)}"}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

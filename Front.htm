@@ -13,6 +13,7 @@
 
     <label for="anexo">Anexo (documento ou planilha):</label>
     <input type="file" id="anexo" accept=".xls,.xlsx,.csv,.json,.txt,.docx,.html" />
+    <button type="button" onclick="removerArquivo()">Remover arquivo</button>
     <br><br>
 
     <button onclick="enviarpergunta()">Enviar</button>
@@ -20,6 +21,11 @@
     <div id="resposta" style="margin-top: 20px;"></div>
 
     <script>
+        function removerArquivo() {
+            const arquivoInput = document.getElementById('anexo');
+            arquivoInput.value = '';  // limpa o input file
+        }
+
         async function enviarpergunta() {
             const pergunta = document.getElementById('pergunta').value.trim();
             const arquivoInput = document.getElementById('anexo');
@@ -31,14 +37,12 @@
                 return;
             }
 
-            if (arquivoInput.files.length === 0) {
-                respostaDiv.innerHTML = "<span style='color:red;'>Por favor, selecione um arquivo.</span>";
-                return;
-            }
-
             const formData = new FormData();
             formData.append('pergunta', pergunta);
-            formData.append('anexo', arquivoInput.files[0]);
+
+            if (arquivoInput.files.length > 0) {
+                formData.append('anexo', arquivoInput.files[0]);
+            }
 
             try {
                 const response = await fetch('http://127.0.0.1:5000/pergunta', {
