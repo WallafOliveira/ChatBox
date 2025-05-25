@@ -3,8 +3,8 @@ from flask_cors import CORS
 from google import genai
 import os
 import re
+import pandas as pd
 
-# Configura a API key do Gemini
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
     raise ValueError("A variável de ambiente GEMINI_API_KEY não está definida.")
@@ -14,7 +14,6 @@ client = genai.Client(api_key=api_key)
 app = Flask(__name__)
 CORS(app)
 
-# Verifica se a pergunta é sobre e-commerce
 def is_ecommerce_related(pergunta):
     try:
         response = client.models.generate_content(
@@ -25,11 +24,17 @@ def is_ecommerce_related(pergunta):
     except:
         return False
 
-# Gera uma resposta curta e objetiva
-def gerar_resposta_formatada(pergunta):
+def gerar_resposta_formatada(pergunta, dados_planilha=None):
+    contexto = ""
+    if dados_planilha is not None:
+        # Resumo simples para o modelo (exemplo: 5 primeiras linhas)
+        resumo = dados_planilha.head(5).to_string(index=False)
+        contexto = f"\nAqui estão alguns dados relevantes da planilha:\n{resumo}\n"
+
     prompt = f"""
 Responda de forma curta, clara e objetiva, usando marcadores simples.
 Pergunta: "{pergunta}"
+{contexto}
 """
     response = client.models.generate_content(
         model="gemini-2.0-flash",
@@ -37,12 +42,10 @@ Pergunta: "{pergunta}"
     )
     return formatar_em_html(response.text)
 
-# Formata a resposta em HTML
 def formatar_em_html(texto):
     texto = texto.replace("\n", "<br>")
     texto = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', texto)
 
-    # Converte listas com "* " em <ul><li>
     itens = re.findall(r'^\* (.+)$', texto, flags=re.MULTILINE)
     if itens:
         lista = "<ul>" + "".join(f"<li>{item}</li>" for item in itens) + "</ul>"
@@ -51,11 +54,10 @@ def formatar_em_html(texto):
 
     return texto
 
-# Rota principal da API
 @app.route('/pergunta', methods=['POST'])
 def pergunta():
-    dados = request.get_json()
-    pergunta = dados.get("pergunta") if dados else None
+    pergunta = request.form.get("pergunta")
+    arquivo = request.files.get("anexo")
 
     if not pergunta:
         return jsonify({"erro": "Pergunta inválida"}), 400
@@ -63,9 +65,23 @@ def pergunta():
     if not is_ecommerce_related(pergunta):
         return jsonify({"erro": "A pergunta não está relacionada ao e-commerce."}), 400
 
+    if not arquivo:
+        return jsonify({"erro": "Arquivo Excel não enviado."}), 400
+
     try:
-        resposta = gerar_resposta_formatada(pergunta)
-        return jsonify({"pergunta": pergunta, "resposta": resposta})
+        dados_planilha = pd.read_excel(arquivo)
+    except Exception as e:
+        return jsonify({"erro": f"Erro ao ler o arquivo Excel: {str(e)}"}), 400
+    
+    dados_clientes = dados_planilha.fillna("").to_dict(orient="records")
+
+    try:
+        resposta = gerar_resposta_formatada(pergunta, dados_planilha)
+        return jsonify({
+            "pergunta": pergunta,
+            "resposta": resposta,
+            "dados_clientes": dados_clientes
+        })
     except Exception as e:
         return jsonify({"erro": f"Erro ao processar a pergunta: {str(e)}"}), 500
 
