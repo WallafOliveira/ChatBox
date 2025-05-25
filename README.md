@@ -1,41 +1,42 @@
+
 # 📦 API Gemini E-commerce — Flask
 
-Esta é uma API desenvolvida em Python utilizando Flask, que usa o modelo Gemini para responder perguntas relacionadas ao e-commerce de forma curta, clara e formatada para fácil leitura no frontend.
+API desenvolvida em Python utilizando Flask, que utiliza o modelo Gemini (Google Generative AI) para responder perguntas relacionadas a e-commerce de forma curta, clara e formatada em HTML para fácil exibição no frontend.
 
 ---
 
-## 🚀 Tecnologias utilizadas
+## 🚀 Tecnologias Utilizadas
 
 - Python 3
 - Flask
 - Flask-CORS
 - Google Generative AI (`google.genai`)
-- RegEx (para formatação da resposta)
+- pandas
+- python-docx
+- RegEx para formatação da resposta em HTML
 
 ---
 
-## 📂 Estrutura
-
-
+## 📂 Estrutura do Projeto
 
 ```
 backend/
-├── api.py               # Arquivo principal da API
-└── requirements.txt     # Dependências (opcional)
+├── api.py               # Arquivo principal da API Flask
+└── requirements.txt     # Dependências do projeto
 ```
 
 ---
 
 ## ⚙️ Configuração
 
-### 1. Clone o projeto:
+### 1. Clone o repositório:
 
 ```bash
 git clone https://github.com/seu-usuario/seu-repo.git
 cd backend
 ```
 
-### 2. Crie um ambiente virtual (opcional, mas recomendado):
+### 2. (Opcional) Crie e ative um ambiente virtual:
 
 ```bash
 python -m venv venv
@@ -46,80 +47,112 @@ venv\Scripts\activate     # Windows
 ### 3. Instale as dependências:
 
 ```bash
-pip install flask flask-cors google-generativeai
+pip install flask flask-cors google-generativeai pandas python-docx
 ```
 
-> Ou, se você tiver um `requirements.txt`, use:
->
-> ```bash
-> pip install -r requirements.txt
-> ```
-
-### 4. Defina sua chave da API Gemini:
-
-Você pode definir via variável de ambiente:
+> Ou, se usar um `requirements.txt`:
 
 ```bash
-export GEMINI_API_KEY="sua-chave-aqui"      # Linux/macOS
-set GEMINI_API_KEY="sua-chave-aqui"         # Windows
+pip install -r requirements.txt
 ```
+
+### 4. Configure a variável de ambiente da API Gemini:
+
+No Linux/macOS:
+
+```bash
+export GEMINI_API_KEY="sua-chave-aqui"
+```
+
+No Windows (PowerShell):
+
+```powershell
+ GEMINI_API_KEY "sua-chave-aqui"
+```
+
+Após definir, reinicie seu terminal para a variável ser reconhecida.
 
 ---
 
-## ▶️ Executando a API
+## ▶️ Como Executar a API
 
-Com tudo configurado, basta rodar:
+No terminal, dentro da pasta do projeto:
 
 ```bash
 python api.py
 ```
 
-A API será executada por padrão em: `http://localhost:5000`
+A API estará disponível por padrão em:
+
+```
+http://localhost:5000
+```
 
 ---
 
 ## 📫 Endpoints
 
-### `POST /pergunta`
+### POST `/pergunta`
 
-Recebe uma pergunta e retorna uma resposta curta e clara se estiver relacionada ao e-commerce.
+Recebe uma pergunta e, opcionalmente, um arquivo (planilha, documento, etc), e retorna uma resposta curta, clara e formatada, se a pergunta estiver relacionada ao e-commerce.
 
-**Request:**
+#### Requisição
 
-```json
-{
-  "pergunta": "Como melhorar o SEO da minha loja virtual?"
-}
-```
+- Parâmetros do formulário:
+  - `pergunta` (string) — Pergunta do usuário (obrigatório)
+  - `anexo` (arquivo) — Arquivo anexado (opcional). Aceita formatos: `.csv`, `.json`, `.txt`, `.xls`, `.xlsx`, `.html`, `.docx`
 
-**Response:**
+#### Resposta (JSON)
+
+- Sucesso (200):
 
 ```json
 {
   "pergunta": "Como melhorar o SEO da minha loja virtual?",
-  "resposta": "<ul><li>Otimize títulos e descrições.</li><li>Use palavras-chave relevantes.</li><li>Mantenha o site rápido e responsivo.</li></ul>"
+  "resposta": "<ul><li>Otimize títulos e descrições.</li><li>Use palavras-chave relevantes.</li><li>Mantenha o site rápido e responsivo.</li></ul>",
+  "dados_clientes": [  // Opcional, se arquivo enviado e com dados
+    {
+      "Nome": "Cliente 1",
+      "Email": "cliente1@email.com",
+      ...
+    },
+    ...
+  ]
 }
 ```
 
-> ⚠️ Se a pergunta não for relacionada ao e-commerce, a API retornará:
->
-> ```json
-> {
->   "erro": "A pergunta não está relacionada ao e-commerce."
-> }
-> ```
+- Erro (400 ou 500):
+
+```json
+{
+  "erro": "Mensagem de erro descritiva."
+}
+```
 
 ---
 
 ## 💡 Funcionalidades
 
-- ✅ Classificação da pergunta (se é sobre e-commerce)
-- ✅ Respostas formatadas em HTML com marcadores
-- ✅ Respostas curtas, simples e diretas
-- ✅ Integração fácil com frontend em React
+- ✅ Verifica se a pergunta é relacionada a e-commerce usando modelo Gemini
+- ✅ Lê arquivos anexados em vários formatos populares e extrai dados tabulares
+- ✅ Gera respostas curtas, claras e formatadas em HTML usando marcadores
+- ✅ Suporta envio e retorno dos dados da planilha para uso no frontend
+- ✅ Fácil integração com frontend (exemplo React)
 
 ---
 
-## 📄 Licença
+## 📦 Dependências
 
-MIT — sinta-se livre para usar e modificar este projeto.
+As versões testadas e recomendadas são:
+
+```
+Flask==3.1.1
+flask_cors==6.0.0
+pandas==2.2.3
+protobuf==6.31.0
+python-docx==1.1.2
+google-generativeai
+```
+
+---
+**Desenvolvido com ❤️ por [Seu Nome]**
