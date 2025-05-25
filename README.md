@@ -154,5 +154,3 @@ python-docx==1.1.2
 google-generativeai
 ```
 
----
-**Desenvolvido com ❤️ por [Seu Nome]**
