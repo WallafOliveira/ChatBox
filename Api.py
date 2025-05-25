@@ -4,6 +4,8 @@ from google import genai
 import os
 import re
 import pandas as pd
+from docx import Document
+from pathlib import Path
 
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key:
@@ -24,10 +26,31 @@ def is_ecommerce_related(pergunta):
     except:
         return False
 
+def ler_documento(arquivo, nome_arquivo):
+    try:
+        extensao = Path(nome_arquivo).suffix.lower()
+        if extensao == ".csv":
+            return pd.read_csv(arquivo)
+        elif extensao == ".json":
+            return pd.read_json(arquivo)
+        elif extensao == ".txt":
+            return pd.read_table(arquivo)
+        elif extensao in [".xlsx", ".xls", ".xlsm", ".xlsb", ".xltx", ".xltm"]:
+            return pd.read_excel(arquivo)
+        elif extensao == ".html":
+            return pd.read_html(arquivo)[0]
+        elif extensao == ".docx":
+            doc = Document(arquivo)
+            textos = [p.text for p in doc.paragraphs if p.text.strip() != ""]
+            return pd.DataFrame({"Texto": textos})
+        else:
+            raise ValueError("Formato de arquivo não suportado.")
+    except Exception as e:
+        raise ValueError(f"Erro ao ler o arquivo: {str(e)}")
+
 def gerar_resposta_formatada(pergunta, dados_planilha=None):
     contexto = ""
     if dados_planilha is not None:
-        # Resumo simples para o modelo (exemplo: 5 primeiras linhas)
         resumo = dados_planilha.head(5).to_string(index=False)
         contexto = f"\nAqui estão alguns dados relevantes da planilha:\n{resumo}\n"
 
@@ -66,17 +89,17 @@ def pergunta():
         return jsonify({"erro": "A pergunta não está relacionada ao e-commerce."}), 400
 
     if not arquivo:
-        return jsonify({"erro": "Arquivo Excel não enviado."}), 400
+        return jsonify({"erro": "Nenhum arquivo enviado."}), 400
 
     try:
-        dados_planilha = pd.read_excel(arquivo)
+        dados = ler_documento(arquivo, arquivo.filename)
     except Exception as e:
-        return jsonify({"erro": f"Erro ao ler o arquivo Excel: {str(e)}"}), 400
-    
-    dados_clientes = dados_planilha.fillna("").to_dict(orient="records")
+        return jsonify({"erro": str(e)}), 400
+
+    dados_clientes = dados.fillna("").to_dict(orient="records")
 
     try:
-        resposta = gerar_resposta_formatada(pergunta, dados_planilha)
+        resposta = gerar_resposta_formatada(pergunta, dados)
         return jsonify({
             "pergunta": pergunta,
             "resposta": resposta,

@@ -16,6 +16,8 @@ Esta é uma API desenvolvida em Python utilizando Flask, que usa o modelo Gemini
 
 ## 📂 Estrutura
 
+
+
 ```
 backend/
 ├── api.py               # Arquivo principal da API

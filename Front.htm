@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Front Chat E-commerce</title>
+</head>
+<body>
+    <h1>Assistente de E-commerce</h1>
+
+    <textarea id="pergunta" placeholder="Digite sua pergunta" rows="4" cols="50"></textarea>
+    <br><br>
+
+    <label for="anexo">Anexo (documento ou planilha):</label>
+    <input type="file" id="anexo" accept=".xls,.xlsx,.csv,.json,.txt,.docx,.html" />
+    <br><br>
+
+    <button onclick="enviarpergunta()">Enviar</button>
+
+    <div id="resposta" style="margin-top: 20px;"></div>
+
+    <script>
+        async function enviarpergunta() {
+            const pergunta = document.getElementById('pergunta').value.trim();
+            const arquivoInput = document.getElementById('anexo');
+            const respostaDiv = document.getElementById('resposta');
+            respostaDiv.innerHTML = "Carregando...";
+
+            if (!pergunta) {
+                respostaDiv.innerHTML = "<span style='color:red;'>Por favor, digite uma pergunta.</span>";
+                return;
+            }
+
+            if (arquivoInput.files.length === 0) {
+                respostaDiv.innerHTML = "<span style='color:red;'>Por favor, selecione um arquivo.</span>";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('pergunta', pergunta);
+            formData.append('anexo', arquivoInput.files[0]);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/pergunta', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const clientes = data.dados_clientes;
+                    const resposta = data.resposta;
+                    let tabela = '';
+
+                    if (clientes && clientes.length > 0) {
+                        tabela = '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; margin-top: 15px;">';
+                        tabela += '<thead><tr>';
+
+                        Object.keys(clientes[0]).forEach(cabecalho => {
+                            tabela += `<th>${cabecalho}</th>`;
+                        });
+                        tabela += '</tr></thead><tbody>';
+
+                        clientes.forEach(cliente => {
+                            tabela += '<tr>';
+                            Object.values(cliente).forEach(valor => {
+                                tabela += `<td>${valor}</td>`;
+                            });
+                            tabela += '</tr>';
+                        });
+
+                        tabela += '</tbody></table>';
+                    } else {
+                        tabela = '<p>Nenhum dado encontrado no documento.</p>';
+                    }
+
+                    respostaDiv.innerHTML = `<div><strong>Resposta do Assistente:</strong><br>${resposta}</div>${tabela}`;
+                } else {
+                    respostaDiv.innerHTML = `<span style="color:red;"><strong>Erro:</strong> ${data.erro}</span>`;
+                }
+            } catch (error) {
+                respostaDiv.innerHTML = `<span style="color:red;"><strong>Erro de conexão:</strong> ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
